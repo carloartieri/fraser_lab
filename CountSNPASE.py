@@ -16,7 +16,12 @@
 #
 #2015.03.19
 # - Finished fully functional script that outputs strandedness info.
-
+#
+#2015.03.23
+# - Found bug that killed multiplex mode if you changed the program name
+#   fixed so that QSUB script will always call the correct name.
+# - Found another bug with the suffix code - must have introduced it 
+#	during earlier revision. Fixed the args.suffix location.
 
 ###########
 # MODULES #
@@ -91,7 +96,7 @@ mult.add_argument('-j','--jobs', action='store', dest='jobs', type=int, help='Di
 mult.add_argument('-w','--walltime', action='store', dest='walltime', help='Walltime for each job', default='3:00:00', metavar='')
 mult.add_argument('-k','--mem', action='store', dest='memory', help='Memory for each job', default='5000MB', metavar='')
 single = parser.add_argument_group('Single mode arguments')
-single.add_argument('-f','--suffix', action='store', dest='suff', help='Suffix for multiplexing [set automatically]', default='', metavar='')
+single.add_argument('-f','--suffix', action='store', dest='suffix', help='Suffix for multiplexing [set automatically]', default='', metavar='')
 
 args = parser.parse_args()
 
@@ -249,7 +254,7 @@ if args.mode == 'multi':
 		#PBS -l mem=""" + args.memory + """
 		#PBS -e """ + prefix + suffix + """_err.txt
 		#PBS -o """ + prefix + suffix + """_out.txt
-		python2 CountSNPLevelASE.py --mode single --snps """ + args.snps + """ --reads """ + reads_file + """ --suffix """ +  suffix + """ --prefix """ + args.prefix + """
+		python2 """ + parser.prog + """ --mode single --snps """ + args.snps + """ --reads """ + reads_file + """ --suffix """ +  suffix + """ --prefix """ + args.prefix + """
 		exit 0
 		"""
 		qsub = open('qsub.txt', 'w')
