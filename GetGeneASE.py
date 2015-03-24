@@ -16,7 +16,10 @@
 #2015.03.23 - Found some bugs in the way the script was outputting the SNP counts in the SNP
 #			  string. Fixed.
 #			- Script fully functional.
-
+#
+#2015.03.24 - Added in the option to output phased SNP-level ASE as this may be usefult for
+#			  downstream analyses.
+#
 
 ###########
 # MODULES #
@@ -31,7 +34,7 @@ import subprocess	#Access to external command-line
 import os			#Access to external command-line
 import textwrap		#Add text block wrapping properties
 from time import sleep	#Allow system pausing
-import common		#My custom common python scripts
+#import common		#My custom common python scripts
 
 ##########################
 # COMMAND-LINE ARGUMENTS #
@@ -64,6 +67,11 @@ Detailed description of inputs/outputs follows:
 	This sets the minimum # of reads required to include a SNP in the calculation of the
 	fraction of SNPs agreeing in allelic direction.
 
+-w/--writephasedsnps
+	If this is specified, then the program will output an additional output file named
+	[OUTFILE].snp.txt with phased SNP-level ASE calls. This can be useful for checking
+	SNP consistency across samples. See below for a description of the output.
+
 -s/--stranded
 	If the data come from a stranded library prep, then this option will only count reads
 	mapped to the corresponding strand.
@@ -86,6 +94,19 @@ REF-ALT_RATIO 		The proportion of SNPs agreeing in direction (0.5 - 1)
 SNPS 			A list of all SNPs overlapped by the feature separated by ';' and of the format:
 
 	[1-based position],[REF_ALLELE]|[ALT_ALLELE],[REF_COUNTS]|[ALT_COUNTS];
+
+If the -w/--writephasedsnps option has been set, it will produce a tab-delimited table with the 
+following columns:
+
+CHROMOSOME 		Chromosome where SNP is found
+POSITION 		1-based position
+FEATURE 		Feature in which SNP is found
+ORIENTATION 		Orientation of feature (if stranded only reads on this strand are counted)
+REFERENCE_ALLELE 	Reference base
+ALTERNATE_ALLELE 	Alternate base
+REF_COUNTS 		Reference base counts
+ALT_COUNTS 		Alternate base counts
+
 	
 """
 class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
@@ -98,11 +119,12 @@ req.add_argument('-p','--phasedsnps', action="store", dest="phasedsnps", help='B
 req.add_argument('-g','--gff', action="store", dest="gff", help='GFF/GTF formatted annotation file', required=True, metavar='')
 req.add_argument('-o','--outfile', action="store", dest="outfile", help='Gene-level ASE counts output', required=True, metavar='')
 opt = parser.add_argument_group('Optional arguments:')
+opt.add_argument('-w','--writephasedsnps', action="store_true", dest="write", help='Write a phased SNP-level ASE output file [OUTFILE].snps.txt')
 opt.add_argument('-i','--identifier', action="store", dest="id", help='ID attribute in information column', default='gene_id', metavar='')
 opt.add_argument('-t','--type', action="store", dest="type", help='Annotation feature type', default='exon', metavar='')
 opt.add_argument('-m','--min', action="store", dest="min", type=int, help='Min reads to calculate proportion ref/alt biased', default=10)
 opt.add_argument('-s','--stranded', action="store_true", dest="stranded", help='Data are stranded? [Default: False]')
-opt.add_argument("-h", "--help", action="help", help="Show this help message and exit")
+opt.add_argument('-h', '--help', action="help", help="Show this help message and exit")
 args = parser.parse_args()
 
 #############
@@ -163,6 +185,7 @@ total_snps = {}
 ref_biased = {}
 alt_biased = {}
 snp_array = {}
+phased_snp_array = []	#15.03.24 - For phased SNP output file.
 
 features = {}	#We have to store a list of all of the features somewhere
 
@@ -265,12 +288,14 @@ for line in gff_file:
 						elif ref_pos_counts < alt_pos_counts:
 							alt_biased[name] += 1
 
-					#Add it to the total SNP array
+					#Add it to the total SNP arrays
 					if name in snp_array:
 						snp_array[name].append(str(i) + ',' + str(snp_phase_dict[pos]) + ',' + str(ref_pos_counts) + '|' + str(alt_pos_counts))
+						phased_snp_array.append(str(chromosome[name]) + '\t' + str(i) + '\t' + name + '\t' + ori[name] + '\t' + str(refalt[0]) + '\t' + str(refalt[1]) + '\t' + str(ref_pos_counts) + '\t' + str(alt_pos_counts))
 					else:
 						snp_array[name] = []
 						snp_array[name].append(str(i) + ',' + str(snp_phase_dict[pos]) + ',' + str(ref_pos_counts) + '|' + str(alt_pos_counts))
+						phased_snp_array.append(str(chromosome[name]) + '\t' + str(i) + '\t' + name + '\t' + ori[name] + '\t' + str(refalt[0]) + '\t' + str(refalt[1]) + '\t' + str(ref_pos_counts) + '\t' + str(alt_pos_counts))
 
 				elif orientation == '-':
 					if name in total_ref:
@@ -302,9 +327,11 @@ for line in gff_file:
 					#Add it to the total SNP array
 					if name in snp_array:
 						snp_array[name].append(str(i) + ',' + str(snp_phase_dict[pos]) + ',' + str(ref_neg_counts) + '|' + str(alt_neg_counts))
+						phased_snp_array.append(str(chromosome[name]) + '\t' + str(i) + '\t' + name + '\t' + ori[name] + '\t' + str(refalt[0]) + '\t' + str(refalt[1]) + '\t' + str(ref_neg_counts) + '\t' + str(alt_neg_counts))
 					else:
 						snp_array[name] = []
 						snp_array[name].append(str(i) + ',' + str(snp_phase_dict[pos]) + ',' + str(ref_neg_counts) + '|' + str(alt_neg_counts))
+						phased_snp_array.append(str(chromosome[name]) + '\t' + str(i) + '\t' + name + '\t' + ori[name] + '\t' + str(refalt[0]) + '\t' + str(refalt[1]) + '\t' + str(ref_neg_counts) + '\t' + str(alt_neg_counts))
 
 
 			else:
@@ -402,3 +429,13 @@ for key in keys:
 
 outfile.close()
 
+if args.write is True:
+
+	outfile = open(args.outfile + '.snps.txt', 'w')
+	#Header
+	outfile.write('CHROMOSOME\tPOSITION\tFEATURE\tORIENTATION\tREFERENCE_ALLELE\tALTERNATE_ALLELE\tREF_COUNTS\tALT_COUNTS\n')
+
+	for i in phased_snp_array:
+		outfile.write(i + '\n')		
+
+	outfile.close()
