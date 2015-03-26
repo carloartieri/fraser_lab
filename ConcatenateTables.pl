@@ -37,6 +37,28 @@ sub tab_parse {
 # SCRIPT #
 ##########
 
+if(($ARGV[0] eq '-h') || ($ARGV[0] eq '--help'))	{
+	print colored['bright_red'], '
+	This script will concatenate any number of tab-delimited tables based on a list of common 
+	identifiers. Tables that do not contain the identifier will have \'NA\'s in place of the
+	missing cells. 
+
+	USAGE: perl ConcatenateTables.pl <LIST> <0-based search column> <OUTFILE> <TABLE 1> <TABLE 2> ... <TABLE N>
+
+	The <LIST> should contain the identifiers, each on a separate line. The <0-based search column> 
+	tells the script in which column in each table to look for the identifiers (usually the first,
+	or 0). After specifying the <OUTFILE>, each table should be separated by a space. They will be 
+	concatenated in the order specified.
+	
+	--help or --h
+		Print this text.
+		
+';
+	exit;
+}
+
+
+
 #First open up the list and store it.
 
 open (LIST, "$list");
