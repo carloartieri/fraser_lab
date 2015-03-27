@@ -2,7 +2,7 @@
 # NOTES ON FRASER LAB SCRIPTS #
 ###############################
 
-Last updated 2015.03.26 by Carlo
+Last updated 2015.03.27 by Carlo
 
 
 BED2FASTA.pl
@@ -16,8 +16,8 @@ BED2FASTA.pl
 	Options and formatting are as follows:
 
 	--rev
-		If this option is specified, reverse transcribe genes on the negative strand so that their
-		sequence is 5\' - 3\'. 
+		If this option is specified, reverse transcribe genes on the negative strand so that 
+		their sequence is 5' - 3'. 
 	
 	--help or --h
 		Print this text.
@@ -57,6 +57,81 @@ CountFASTANucs.py
 
 	Optional arguments::
 	  -h, --help      show this help message and exit		
+
+
+GTF2FASTA.pl
+------------
+
+	This script takes an annotation file in GTF format as well as a genome in FASTA format and
+	outputs a new FASTA file containing the sequences of the annotations (e.g., spliced genes).
+
+	USAGE: perl GTF2FASTA.pl --genome <genome.fa> --bed <annotation.bed> --out <annotation.fa> --rev
+
+	Options and formatting are as follows:
+
+	--rev
+		If this option is specified, reverse transcribe genes on the negative strand so that 
+		their sequence is 5' - 3'. 
+	
+	--help or --h
+		Print this text.
+
+
+PerformRankedSignTest.pl
+------------------------
+
+	This script takes a list of genes with ASE values as well as a group of functional 
+	categories 	and determines whether any of the functional categories shows significant 
+	parental bias in 	directionality by way of a chi-square test. It then permutes 
+	gene-category assignments to determine how often such a degree of bias would be observed 
+	by chance, producing a category-specific false-discovery rate.
+
+	USAGE: perl PerformRankedSignTest.pl --asetable [GENE ASE VALUES] --funcats [FUNCTIONAL CATEGORIES] --output [OUTPUT FILE] --fraction [#] --min [#] --perms [#]
+
+	Options and formatting are as follows:
+
+	--asetable 
+		A tab-delimited file with two columns, the first of which is the gene name and the 
+		second is the log2(species 1 allele/species 2 allele) ASE value. i.e.:
+
+		[GENE]	[LOG2 ASE]
+
+	--funcats
+		A tab-delimited list of genes and the functional categories in which they belong. The 
+		genes must be in the first column and the functional categories in the second. Genes 
+		that belong	to multiple categories should separate categories by |. i.e.:
+
+		[GENE]	[FUNCAT 1]|[FUNCAT 2]|[FUNCAT 3]
+
+	--output
+		The tab-delimited file where test values are written with the following columns:
+		
+		CATEGORY		The functional category
+		SP1_BIASED		Number of genes showing species 1 bias (i.e., positive Log2(ASE) values)
+		SP2_BIASED		Number of genes showing species 1 bias (i.e., negative Log2(ASE) values)
+		SP1_EXPECTED		Number of expected genes showing sp1 bias given the proportion of sp1 biased genes among all genes
+		SP2_EXPECTED		Number of expected genes showing sp2 bias given the proportion of sp2 biased genes among all genes
+		CHI_SQ			Chi-square value
+		FDR			How often (1/#perms) is an equal or higher chi-square value observed among permuted data	
+		SP1_GENES		Species 1 biased genes, seperated by |
+		SP2_GENES		Species 2 biased genes, seperated by |
+
+	--fraction [Default 1]
+		Analyze only the top X fraction (e.g., 0.25) most biased genes from each species. 
+		Allows you to look for enrichment of direction bias in tails of the ASE distribution. 
+		By default, the script uses all genes.
+
+	--min	[Default 10]
+		The minimum number of genes that a functional category must posess to attempt the test. 
+		Due to multiple testing, categories with fewer than ~10 genes typically can't acheive 
+		significance.
+		
+	--perms [Default 1000]
+		The number of permutations to run for the purpose of determining the category-specific 
+		FDR.
+	
+	--help or --h
+		Print this text.
 
 		
 ASE PIPELINE
@@ -161,14 +236,14 @@ ASE PIPELINE
 			(i.e. samtools sort -n ). 
 
 		-m/--mode
-			The script can be run in two modes. In 'single' mode, the entire SNP counting is performed
-			locally. In 'multi' mode, the read file will be split up by the number of specified jobs on
-			the cluster. This is much faster for large SAM/BAM files.
+			The script can be run in two modes. In 'single' mode, the entire SNP counting is 
+			performed locally. In 'multi' mode, the read file will be split up by the number of
+			specified jobs on the cluster. This is much faster for large SAM/BAM files.
 	
 		OUTPUT:
 
-		The output of the script is a tab-delimited text file, [PREFIX]_SNP_COUNTS.txt, which contains the
-		following columns:
+		The output of the script is a tab-delimited text file, [PREFIX]_SNP_COUNTS.txt, which 
+		contains the following columns:
 
 		CHR		Chromosome where SNP is found
 		POSITION	1-based position of SNP
@@ -179,8 +254,8 @@ ASE PIPELINE
 		SUM_READS	Sum of all reads assigned to the SNP
 	
 	
-	7. Once we've determined the counts at individual SNPs, we can then obtain the gene/transcript
-	   -level counts with GetGeneASE.py:
+	7. Once we've determined the counts at individual SNPs, we can then obtain the gene/
+	   transcript-level counts with GetGeneASE.py:
 	   
 		usage: GetGeneASE.py -c  -p  -g  -o  [-w] [-i] [-t] [-m MIN] [-s] [-h]
 
@@ -204,9 +279,9 @@ ASE PIPELINE
 		  -s, --stranded        Data are stranded? [Default: False] (default: False)
 		  -h, --help            Show this help message and exit
 
-		NOTE:	SNPs that overlap multiple features on the same strand (or counting from unstranded
-			libraries) will be counted in EVERY feature that they overlap. It is important to 
-			filter the annotation to count features of interest!  
+		NOTE:	SNPs that overlap multiple features on the same strand (or counting from 
+				unstranded libraries) will be counted in EVERY feature that they overlap. It is
+				important to filter the annotation to count features of interest!  
 
 		Detailed description of inputs/outputs follows:
 
@@ -223,12 +298,12 @@ ASE PIPELINE
 			that will be used for grouping counts. For example, in a GTF 'gene_id' will group
 			counts by gene with 'transcript_id' with group counts by transcript. In addition,
 			the -t/--type option sets the feature type (column 3) from which to pull features
-			typically you'd want to count from 'exon', but many annotations may use non-standard
-			terms.
+			typically you'd want to count from 'exon', but many annotations may use non-
+			standard terms.
 
 		-m/--min
-			This sets the minimum # of reads required to include a SNP in the calculation of the
-			fraction of SNPs agreeing in allelic direction.
+			This sets the minimum # of reads required to include a SNP in the calculation of 
+			the fraction of SNPs agreeing in allelic direction.
 
 		-w/--writephasedsnps
 			If this is specified, then the program will output an additional output file named
@@ -236,13 +311,13 @@ ASE PIPELINE
 			SNP consistency across samples. See below for a description of the output.
 
 		-s/--stranded
-			If the data come from a stranded library prep, then this option will only count reads
-			mapped to the corresponding strand.
+			If the data come from a stranded library prep, then this option will only count 
+			reads mapped to the corresponding strand.
 	
 		OUTPUT:
 
-		The output of the script is a tab-delimited text file set by -o/--outfile, which contains 
-		the following columns:
+		The output of the script is a tab-delimited text file set by -o/--outfile, which 
+		contains the following columns:
 
 		FEATURE 		Name of the counted feature	
 		CHROMOSOME 		Chromosome where feature is found
@@ -258,8 +333,8 @@ ASE PIPELINE
 
 			[1-based position],[REF_ALLELE]|[ALT_ALLELE],[REF_COUNTS]|[ALT_COUNTS];
 
-		If the -w/--writephasedsnps option has been set, it will produce a tab-delimited table with the 
-		following columns:
+		If the -w/--writephasedsnps option has been set, it will produce a tab-delimited table 
+		with the following columns:
 
 		CHROMOSOME 		Chromosome where SNP is found
 		POSITION 		1-based position

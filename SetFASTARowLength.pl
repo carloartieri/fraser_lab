@@ -9,15 +9,24 @@
 # UPDATE HISTORY AND LIST OF THINGS TO FIX #
 ############################################
 
-#14.04.01	Wrote script.
+#14.04.01	
+#	- Wrote script.
 #
-#15.01.28	Added in removal of all blank lines to conform with 'samtools faidx'.
+#15.01.28
+#	- Added in removal of all blank lines to conform with 'samtools faidx'.
 #
-#15.03.26	Added subroutines to script so it no longer needs a common subroutine file.
+#15.03.26
+#	- Added subroutines to script so it no longer needs a common subroutine file.
+#
+#15.03.27
+#	- Added in use of ANSIColor module.
+#
 
 ###############
 # SUBROUTINES #
 ###############
+
+use Term::ANSIColor;
 
 sub fasta2hash	{
 	my($file) = @_; 
@@ -65,6 +74,24 @@ sub fasta2hash	{
 	
 	return %fastahash;
 }
+
+if(($help == 1) || ($genome eq "") || ($bed eq "") || ($out eq ""))	{
+	print colored['bright_red'], '
+	This script makes sure that the sequence of a FASTA file is in rows of defined length (or 
+	less for the last row).
+
+	USAGE: perl SetFASTARowLength.pl [IN FASTA FILE] [OUT FASTA FILE] [ROW LENGTH]
+
+	Options and formatting are as follows:
+
+	--help or --h
+		Print this text.
+		
+';
+	exit;
+}
+
+
 
 ##########
 # SCRIPT #

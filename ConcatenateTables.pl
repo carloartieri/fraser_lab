@@ -6,15 +6,18 @@
 
 #USAGE: perl ConcatenateTables.pl [ELEMENT LIST] [COLUMN {0 BASED}] [OUTFILE] [TABLE1] [TABLE2] etc...
 
+############################################
+# UPDATE HISTORY AND LIST OF THINGS TO FIX #
+############################################
+
+#15.03.27
+#	- Added ANSIColor module and fixed help bug
+
 ##################
 # MISC VARIABLES #
 ##################
 
-$list = shift(@ARGV);	#Shift off the list file.
-$col = shift(@ARGV);	#Shift off the column.
-$out = shift(@ARGV);	#Shift off the name of the outfile.
-@tables = @ARGV;		#The @tables array will contain the tables we're to combine.
-
+use Term::ANSIColor;
 
 ###############
 # SUBROUTINES #
@@ -37,7 +40,7 @@ sub tab_parse {
 # SCRIPT #
 ##########
 
-if(($ARGV[0] eq '-h') || ($ARGV[0] eq '--help'))	{
+if(($ARGV[0] eq "-h") || ($ARGV[0] eq '--help'))	{
 	print colored['bright_red'], '
 	This script will concatenate any number of tab-delimited tables based on a list of common 
 	identifiers. Tables that do not contain the identifier will have \'NA\'s in place of the
@@ -57,7 +60,10 @@ if(($ARGV[0] eq '-h') || ($ARGV[0] eq '--help'))	{
 	exit;
 }
 
-
+$list = shift(@ARGV);	#Shift off the list file.
+$col = shift(@ARGV);	#Shift off the column.
+$out = shift(@ARGV);	#Shift off the name of the outfile.
+@tables = @ARGV;		#The @tables array will contain the tables we're to combine.
 
 #First open up the list and store it.
 

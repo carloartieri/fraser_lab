@@ -17,11 +17,15 @@
 #	  strand.
 #15.03.12
 #	- Cleaned up and put in shared script directory
+#
+#15.03.27
+#	- Added ANSIColor module
 
 ###############
 # SUBROUTINES #
 ###############
 use Getopt::Long;
+use Term::ANSIColor;
 
 sub fasta2hash	{
 	my($file) = @_; 

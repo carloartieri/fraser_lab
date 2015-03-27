@@ -14,6 +14,7 @@
 
 #Use the module that allows for long command line option parsing. 
 use Getopt::Long;
+use Term::ANSIColor;
 
 sub fasta2hash	{
 	my($file) = @_; 
@@ -60,6 +61,28 @@ sub fasta2hash	{
 	$fastahash{$curhead} = $seq;	#The final FASTA seq will be put in here.
 	
 	return %fastahash;
+}
+
+if(($ARGV[0] eq '-h') || ($ARGV[0] eq '--help'))	{
+	print colored['bright_red'], '
+	This script takes a list of SNPs in BED format as well as a genome in FASTA format and 
+	outputs a a new FASTA file containing the genome with all SNP positions masked as \'N\'s.
+
+	USAGE: MaskReferencefromBED.pl <SNP BED FILE> <GENOME FASTA FILE> <MASKED OUTPUT FASTA>
+	
+		A list of SNPs in BED format must be supplied as follows:
+   
+		CHR \t 0-POSITION \t 1-POSITION \t REF|ALT
+   
+		e.g.
+   
+		chr02	1242	1243	A|G
+
+	--help or -h
+		Print this text.
+		
+';
+	exit;
 }
 
 
