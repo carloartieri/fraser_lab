@@ -32,14 +32,32 @@ ConcatenateTables.pl
 
 	USAGE: perl ConcatenateTables.pl <LIST> <0-based search column> <OUTFILE> <TABLE 1> <TABLE 2> ... <TABLE N>
 
-	The <LIST> should contain the identifiers, each on a separate line. The <0-based search column> 
-	tells the script in which column in each table to look for the identifiers (usually the first,
-	or 0). After specifying the <OUTFILE>, each table should be separated by a space. They will be 
-	concatenated in the order specified.
+	The <LIST> should contain the identifiers, each on a separate line. The <0-based search 
+	column>	tells the script in which column in each table to look for the identifiers (usually
+	the first, or 0). After specifying the <OUTFILE>, each table should be separated by a 
+	space. They will be concatenated in the order specified.
 	
 	--help or --h
 		Print this text.
-		
+
+
+CountFASTANucs.py
+-----------------
+
+	Counts the number of each nucleotide in a FASTA file and prints the result. By specifying 
+	-e/--each, it prints nucleotide count for each entry in the FASTA file. Note that the 
+	script counts the incidence of all characters, including missing (N) and masked (X) 
+	nucleotides, but also IUPAC codes.
+
+	USAGE: CountFASTANucs.py -i  [-e] [-h]
+
+	Required arguments::
+	  -i , --infile   FASTA file
+	  -e, --each      Print count for each entry in FASTA
+
+	Optional arguments::
+	  -h, --help      show this help message and exit		
+
 		
 ASE PIPELINE
 ------------
@@ -54,9 +72,9 @@ ASE PIPELINE
 	-------------
 
 
-	1. 	First generate a FASTA formatted file containing the genome where each SNP position has been
-	   	masked by 'N'. An existing genome file can be masked using the MaskReferencefromBED.pl 
-	   	script:
+	1. 	First generate a FASTA formatted file containing the genome where each SNP position has
+		been masked by 'N'. An existing genome file can be masked using the 
+		MaskReferencefromBED.pl script:
 	   	
 		usage: MaskReferencefromBED.pl <SNP BED FILE> <GENOME FASTA FILE> <MASKED OUTPUT FASTA>
 	
@@ -69,25 +87,28 @@ ASE PIPELINE
 		chr02	1242	1243	A|G
 	
 
-	2. 	The pipeline requires that reads mapped to the masked genome be supplied in SAM or BAM format.
-		Assuming that reads will be mapped with STAR (http://bioinformatics.oxfordjournals.org/content/29/1/15):
-		The masked reference must be used to create a STAR index. STAR's efficiency at mapping 
-	   	spliced transcripts is strongly aided by supplying an annotation file in GTF format. The
-	   	command to generate a STAR index is:
+	2. 	The pipeline requires that reads mapped to the masked genome be supplied in SAM or BAM
+		format. Assuming that reads will be mapped with STAR 
+		(http://bioinformatics.oxfordjournals.org/content/29/1/15): The masked reference must 
+		be used to create a STAR index. STAR's efficiency at mapping spliced transcripts is 
+		strongly aided by supplying an annotation file in GTF format. The command to generate a
+		STAR index is:
 	   
 		STAR --runThreadN <NUMBER OF CORES> --runMode genomeGenerate --genomeDir <LOCATION FOR INDEX OUTPUT> --genomeFastaFiles <FIXED MASKED GENOME>.fa --sjdbGTFfile  <ANNOTATION>.gtf --sjdbOverhang <READ LENGTH - 1>
 	   
 
-	3. 	Now map the FASTQ files to the genome using STAR with the following flags. It is critical that
-		SAM/BAM files contain the MD flag for the pipeline to identify SNPs. Also, because of the
-	   	increased incidence of errors in the first 6 bp of reads, we trim them off.
+	3. 	Now map the FASTQ files to the genome using STAR with the following flags. It is 
+		critical that SAM/BAM files contain the MD flag for the pipeline to identify SNPs. 
+		Also, because of the increased incidence of errors in the first 6 bp of reads, we trim 
+		them off.
 	   
 	   	STAR --runThreadN <NUMBER OF CORES> --genomeDir <LOCATION OF INDEX> --outFilterMultimapNmax 1 --outFileNamePrefix <PREFIX FOR OUTPUT> --outSAMtype BAM SortedByCoordinate --outSAMattributes MD NH --clip5pNbases 6
 	   
 
-	4. 	Next, we must remove duplicate reads from the mapped output. If we use the the samtools or the 
-		PICARD tools, we'll create a slight reference allele bias, therefore we should use the XXXX
-		program in the WASP package (see: http://biorxiv.org/content/early/2014/11/07/011221)
+	4. 	Next, we must remove duplicate reads from the mapped output. If we use the the samtools
+		or the PICARD tools, we'll create a slight reference allele bias, therefore we should 
+		use the XXXX program in the WASP package 
+		(see: http://biorxiv.org/content/early/2014/11/07/011221)
 	   	
 	   	
 	5.	The duplicate-removed BAM file then needs to be sorted by mate-pair name rather than 

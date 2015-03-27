@@ -10,15 +10,61 @@
 ############################################
 
 #14.04.01	Wrote script.
+#
 #15.01.28	Added in removal of all blank lines to conform with 'samtools faidx'.
+#
+#15.03.26	Added subroutines to script so it no longer needs a common subroutine file.
 
 ###############
 # SUBROUTINES #
 ###############
 
-$home = `echo \$HOME`;
-chomp($home);
-do "$home/Software/Common_Subroutines.pl";
+sub fasta2hash	{
+	my($file) = @_; 
+	my @FASTA;
+	my $line;
+	my @line2;
+	my @line3;
+	my %fastahash;
+	my $curhead;
+	my $seq = "";
+	my $tmp;
+
+	#Open the FASTA file and store it in an array.
+
+	open (LIST, "$file");
+	@FASTA = <LIST>;
+	close LIST;
+
+	#Now go through the FASTA an store '>' lines as KEYS and sequence as VALUES.
+
+	foreach $line (@FASTA)	{
+		chomp($line);	
+	
+		if(($line =~ />/) && ($seq eq ""))	{	#Here's what we do with the first header.
+			@line2 = split(/>/, $line);
+			@line3 = split(/ /, $line2[1]);
+			$curhead = $line3[0];
+		}
+
+		if($line !~ />/)	{	#Here's what we do with sequence lines.
+			@line2 = split(/>/, $line); 
+			$seq .= $line;
+		}
+		
+		if(($line =~ />/) && ($seq ne ""))	{	#Here's what we do with the subsequent headers.
+			$fastahash{$curhead} = $seq;
+			$seq = "";
+			@line2 = split(/>/, $line);
+			@line3 = split(/ /, $line2[1]);
+			$curhead = $line3[0];
+		}
+	}
+	
+	$fastahash{$curhead} = $seq;	#The final FASTA seq will be put in here.
+	
+	return %fastahash;
+}
 
 ##########
 # SCRIPT #

@@ -31,7 +31,7 @@ parser = argparse.ArgumentParser(description='Counts the number of each nucleoti
 req = parser.add_argument_group('Required arguments:')
 req.add_argument('-i','--infile', action="store", dest="infile", help='FASTA file', required=True, metavar='')
 opt = parser.add_argument_group('Optional arguments:')
-req.add_argument('-e','--each', action="store_true", dest="each", help='Print count for each entry in FASTA')
+opt.add_argument('-e','--each', action="store_true", dest="each", help='Print count for each entry in FASTA')
 opt.add_argument("-h", "--help", action="help", help="show this help message and exit")
 args = parser.parse_args()
 
