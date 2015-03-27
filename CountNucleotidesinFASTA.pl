@@ -11,10 +11,68 @@
 # SUBROUTINES #
 ###############
 
-#This is the location of the common subroutines file.
-$home = `echo \$HOME`;
-chomp($home);
-do "$home/Software/Common_Subroutines.pl";
+sub fasta2hash	{
+	my($file) = @_; 
+	my @FASTA;
+	my $line;
+	my @line2;
+	my %fastahash;
+	my $curhead;
+	my $seq = "";
+	my $tmp;
+
+	#Open the FASTA file and store it in an array.
+
+	open (LIST, "$file");
+	@FASTA = <LIST>;
+	close LIST;
+
+	#Now go through the FASTA and store '>' lines as KEYS and sequence as VALUES.
+
+	foreach $line (@FASTA)	{
+		chomp($line);	
+	
+		if(($line =~ />/) && ($seq eq ""))	{	#Here's what we do with the first header.
+			@line2 = split(/>/, $line);
+			$curhead = $line2[1];
+			$curhead =~ s/\s+//g;
+		}
+
+		if($line !~ />/)	{	#Here's what we do with sequence lines.
+			$seq .= $line;
+		}
+		
+		if(($line =~ />/) && ($seq ne ""))	{	#Here's what we do with the subsequent headers.
+			$fastahash{$curhead} = $seq;
+			$seq = "";
+			@line2 = split(/>/, $line);
+			$curhead = $line2[1];
+			$curhead =~ s/\s+//g;
+		}
+	}
+	
+	$fastahash{$curhead} = $seq;	#The final FASTA seq will be put in here.
+	
+	return %fastahash;
+}
+
+##########
+# SCRIPT #
+##########
+
+if(($ARGV[0] eq '-h') || ($ARGV[0] eq '--help'))	{
+	print colored['bright_red'], '
+	This script counts the number of A,C,T,G,N, or Xs in a FASTA files\' sequence line and spits 
+	out the result.
+	
+	USAGE: perl CountNucleotidesinFASTA.pl <FASTA FILE>
+	
+	--help or --h
+		Print this text.
+		
+';
+	exit;
+}
 
 
 #READ IN THE FASTA
